@@ -101,6 +101,8 @@ static void Stack_dealloc(Stack* self)
         self->head = tmp;
     }
 
+
+
     Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
