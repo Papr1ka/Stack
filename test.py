@@ -1,14 +1,35 @@
-import weakref
+import stack
+import timeit
 
-class Test():
-    name = "Боря"
+# t = """
+# import stack
 
-a = Test()
+# s = stack.stack()
 
-b = weakref.ref(a)
-c = a
-print(b, b())
+# for i in range(1, 1000000):
+#     s.push(213)
+#     if i % 150 == 0:
+#         for j in range(100):
+#             s.pop()
 
-del a
-print(b, b())
-print(c)
+# """
+
+# t2 = """
+# import collections
+
+# s = collections.deque()
+
+# for i in range(1, 1000000):
+#     s.append(213)
+#     if i % 150 == 0:
+#         for j in range(100):
+#             s.pop()
+
+# """
+
+# print("Наша реализация: ", timeit.timeit(t, number=100), "секунд")
+# print("deque реализация: ", timeit.timeit(t2, number=100), "секунд")
+
+print(1)
+print(help(stack))
+print(2)

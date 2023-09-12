@@ -1,59 +1,94 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "structmember.h"
-#include "Stack.h"
 
-#define DEBUG
+//#define DEBUG
 
-/*
- * Implements an example function.
- */
-PyDoc_STRVAR(Stack_example_doc, "example(obj, number)\
+PyDoc_STRVAR(stack_example_doc, "example(obj, number)\
 \
 Example function");
 
+struct StackNode
+{
+    PyObject* item;
+    struct StackNode* next;
+};
+
 typedef struct
 {
-    PyObject_HEAD
+    PyObject_VAR_HEAD
     struct StackNode* head;
+    //PyObject* weakreflist;
 } Stack;
 
-/*static PyMemberDef Custom_members[] = {
-    {"item", T_OBJECT_EX, offsetof(StackNode, item), 0, "any python object"},
-    {"next", T_OBJECT_EX, offsetof(CustomObject, last), 0, "last name"},
-    {"number", T_INT, offsetof(CustomObject, number), 0, "custom number"},
-    {NULL}
-};*/
-
-PyObject* Stack_new(PyTypeObject* type, PyObject* args, PyObject* kwargs)
+PyObject* stack_new(PyTypeObject* type, PyObject* args, PyObject* kwargs)
 {
 #ifdef DEBUG
-    printf("Stack_new method called\n");
+    printf("stack_new method called\n");
 #endif // DEBUG
     Stack* self;
     self = (Stack*)type->tp_alloc(type, 0);
     if (self != NULL)
     {
         self->head = NULL;
+        //self->weakreflist = NULL;
+        Py_SET_SIZE(self, 0);
     }
     return (PyObject*)self;
 }
 
-static int Stack_init(Stack* self, PyObject* args, PyObject* kwargs)
+static int stack_init(Stack* self, PyObject* args, PyObject* kwargs)
 {
 #ifdef DEBUG
-    printf("Stack_init method called\n");
+    printf("stack_init method called\n");
 #endif // DEBUG
+
     return 0;
 }
 
-static PyObject* Stack_push(Stack* self, PyObject* object)
+int tp_traverse(Stack* self, visitproc visit, void* arg)
 {
+#ifdef DEBUG
+    printf("traverse method called\n");
+#endif // DEBUG
+    Py_VISIT(Py_TYPE(self));
+    struct StackNode* tmp;
+    tmp = self->head;
+    while (tmp != NULL)
+    {
+        Py_VISIT(tmp->item);
+        tmp = self->head->next;
+    }
+    return 0;
+}
+
+int stack_clear(Stack* self)
+{
+#ifdef DEBUG
+    printf("clear method called\n");
+#endif // DEBUG
+    struct StackNode* tmp;
+    tmp = self->head;
+    while (self->head != NULL)
+    {
+        Py_CLEAR(self->head->item);
+        tmp = self->head->next;
+        PyMem_FREE(self->head);
+        self->head = tmp;
+    }
+    return 0;
+}
+
+static PyObject* stack_push(Stack* self, PyObject* object)
+{
+#ifdef DEBUG
+    printf("push method called\n");
+#endif // DEBUG
     struct StackNode* node = NULL;
     node = (struct StackNode*)PyMem_Malloc(sizeof(struct StackNode));
     if (node == NULL)
     {
-        PyErr_SetString(PyExc_MemoryError, "Can't allocate memory for new element");
+        PyErr_NoMemory();
         return NULL;
     }
     node->item = object;
@@ -67,11 +102,23 @@ static PyObject* Stack_push(Stack* self, PyObject* object)
     {
         self->head = node;
     }
-
+    Py_SET_SIZE(self, Py_SIZE(self) + 1);
     Py_RETURN_NONE;
 }
 
-static PyObject* Stack_pop(Stack* self, PyObject* PyUnused(ignored))
+static PyObject* stack_peek(Stack* self, PyObject* Py_UNUSED(ignored))
+{
+#ifdef DEBUG
+    printf("peek method called\n");
+#endif // DEBUG
+    if (self->head == NULL)
+    {
+        Py_RETURN_NONE;
+    }
+    return self->head->item;
+}
+
+static PyObject* stack_pop(Stack* self, PyObject* PyUnused(ignored))
 {
     if (self->head == NULL)
     {
@@ -83,62 +130,80 @@ static PyObject* Stack_pop(Stack* self, PyObject* PyUnused(ignored))
     
     PyObject* object = tmp->item;
     PyMem_Free(tmp);
+    Py_SET_SIZE(self, Py_SIZE(self) - 1);
 
     return object;
 }
 
-static void Stack_dealloc(Stack* self)
+static void stack_dealloc(Stack* self)
 {
 #ifdef DEBUG
-    printf("Stack_dealloc method called\n");
+    printf("stack_dealloc method called\n");
 #endif // DEBUG
-    struct StackNode* tmp;
-    while (self->head != NULL)
+
+    PyTypeObject* tp = Py_TYPE(self);
+
+    PyObject_GC_UnTrack(self);
+
+    /*
+    if (self->weakreflist != NULL)
     {
-        Py_XDECREF(self->head->item);
-        tmp = self->head->next;
-        PyMem_Free(self->head);
-        self->head = tmp;
+        PyObject_ClearWeakRefs((PyObject*)self);
     }
+    */
 
+    stack_clear(self);
 
-
-    Py_TYPE(self)->tp_free((PyObject*)self);
+    tp->tp_free((PyObject*)self);
+    Py_DECREF(tp);
 }
 
 /*
- * List of functions to add to Stack in exec_Stack().
+ * List of functions to add to stackobject in exec_stackobject().
  */
-static PyMethodDef Stack_methods[] = {
-    { "push", (PyCFunction)Stack_push, METH_O, PyDoc_STR("put the element to stack top")},
-    { "pop", (PyCFunction)Stack_pop, METH_NOARGS, PyDoc_STR("return and delete the top stack element")},
+static PyMethodDef stack_methods[] = {
+    { "push", (PyCFunction)stack_push, METH_O, PyDoc_STR("put the element to stack top")},
+    { "pop", (PyCFunction)stack_pop, METH_NOARGS, PyDoc_STR("return and delete the top element from stack")},
+    { "peek", (PyCFunction)stack_peek, METH_NOARGS, PyDoc_STR("return to the top stack element")},
     { NULL, NULL, 0, NULL } /* marks end of array */
 };
 
-static PyTypeObject Stack_type = {
+static Py_ssize_t stack_len(Stack* self)
+{
+    return Py_SIZE(self);
+}
+
+static PySequenceMethods stack_as_sequence = {
+    .sq_length = (lenfunc) stack_len,
+};
+
+static PyTypeObject stack_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "stack.Stack",
     .tp_doc = PyDoc_STR("The simple stack"),
     .tp_basicsize = sizeof(Stack),
-    .tp_itemsize = 0,
-    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-    .tp_new = Stack_new,
-    .tp_init = (initproc) Stack_init,
-    .tp_dealloc = (destructor) Stack_dealloc,
-    .tp_methods = Stack_methods,
+    .tp_itemsize = NULL,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_HEAPTYPE,
+    .tp_new = stack_new,
+    .tp_init = (initproc)stack_init,
+    .tp_dealloc = (destructor)stack_dealloc,
+    .tp_methods = stack_methods,
+    .tp_as_sequence = &stack_as_sequence,
+    .tp_clear = stack_clear,
+    //.tp_weaklistoffset = offsetof(Stack, weakreflist),
 };
 
 /*
- * Documentation for Stack.
+ * Documentation for stackobject.
  */
-PyDoc_STRVAR(Stack_doc, "The Stack module");
+PyDoc_STRVAR(stack_doc, "The stackobject module");
 
 
-static PyModuleDef Stack_def = {
+static PyModuleDef stack_def = {
     PyModuleDef_HEAD_INIT,
     .m_name = "stack",
-    .m_doc = Stack_doc,
-    .m_size = -1,              
+    .m_doc = stack_doc,
+    .m_size = -1,
 };
 
 PyMODINIT_FUNC PyInit_stack() {
@@ -148,29 +213,28 @@ PyMODINIT_FUNC PyInit_stack() {
 
     PyObject* m;
 
-    if (PyType_Ready(&Stack_type) < 0)
+    if (PyType_Ready(&stack_type) < 0)
     {
         return NULL;
     }
 
-    m = PyModule_Create(&Stack_def);
+    m = PyModule_Create(&stack_def);
     if (m == NULL)
     {
         return NULL;
     }
 
-    Py_INCREF(&Stack_type);
+    Py_INCREF(&stack_type);
 
     if (PyErr_Occurred() != NULL)
     {
-        printf("Some error occured in module stack on itinialication\n");
+        printf("Some error occured in module stack on inialication\n");
     }
 
-
-    if (PyModule_AddObject(m, "stack", (PyObject*) &Stack_type) < 0)
+    if (PyModule_AddType(m, &stack_type) < 0)
     {
-        Py_DECREF(&Stack_type);
-        Py_DECREF(&m);
+        Py_XDECREF(&stack_type);
+        Py_XDECREF(&m);
         return NULL;
     }
 
