@@ -18,7 +18,7 @@ typedef struct
 {
     PyObject_VAR_HEAD
     struct StackNode* head;
-    //PyObject* weakreflist;
+    PyObject* weakreflist;
 } Stack;
 
 PyObject* stack_new(PyTypeObject* type, PyObject* args, PyObject* kwargs)
@@ -31,7 +31,7 @@ PyObject* stack_new(PyTypeObject* type, PyObject* args, PyObject* kwargs)
     if (self != NULL)
     {
         self->head = NULL;
-        //self->weakreflist = NULL;
+        self->weakreflist = NULL;
         Py_SET_SIZE(self, 0);
     }
     return (PyObject*)self;
@@ -145,12 +145,10 @@ static void stack_dealloc(Stack* self)
 
     PyObject_GC_UnTrack(self);
 
-    /*
     if (self->weakreflist != NULL)
     {
         PyObject_ClearWeakRefs((PyObject*)self);
     }
-    */
 
     stack_clear(self);
 
@@ -190,7 +188,7 @@ static PyTypeObject stack_type = {
     .tp_methods = stack_methods,
     .tp_as_sequence = &stack_as_sequence,
     .tp_clear = stack_clear,
-    //.tp_weaklistoffset = offsetof(Stack, weakreflist),
+    .tp_weaklistoffset = offsetof(Stack, weakreflist),
 };
 
 /*
