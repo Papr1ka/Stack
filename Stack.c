@@ -46,7 +46,7 @@ static int stack_init(Stack* self, PyObject* args, PyObject* kwargs)
     return 0;
 }
 
-int tp_traverse(Stack* self, visitproc visit, void* arg)
+int stack_traverse(Stack* self, visitproc visit, void* arg)
 {
 #ifdef DEBUG
     printf("traverse method called\n");
@@ -181,12 +181,15 @@ static PyTypeObject stack_type = {
     .tp_doc = PyDoc_STR("The simple stack"),
     .tp_basicsize = sizeof(Stack),
     .tp_itemsize = NULL,
-    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_HEAPTYPE,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC
+    //Py_TPFLAGS_HEAPTYPE,
+    ,
     .tp_new = stack_new,
     .tp_init = (initproc)stack_init,
     .tp_dealloc = (destructor)stack_dealloc,
     .tp_methods = stack_methods,
     .tp_as_sequence = &stack_as_sequence,
+    .tp_traverse = stack_traverse,
     .tp_clear = stack_clear,
     .tp_weaklistoffset = offsetof(Stack, weakreflist),
 };
