@@ -108,6 +108,7 @@ static PyObject* stack_peek(stackobject* self, PyObject* Py_UNUSED(ignored))
     {
         Py_RETURN_NONE;
     }
+    Py_INCREF(self->head->item);
     return self->head->item;
 }
 
@@ -128,7 +129,6 @@ static PyObject* stack_pop(stackobject* self, PyObject* Py_UNUSED(ignored))
     self->head = tmp->next;
     object = tmp->item;
     PyMem_Free(tmp);
-    Py_DECREF(object);
     Py_SET_SIZE(self, Py_SIZE(self) - 1);
     return object;
 }
@@ -155,7 +155,7 @@ static void stack_dealloc(stackobject* self)
 static PyMethodDef stack_methods[] = {
     { "push", (PyCFunction)stack_push, METH_O, stack_push_doc},
     { "pop", (PyCFunction)stack_pop, METH_NOARGS, stack_pop_doc},
-    { "peek", (PyCFunction)stack_clearmethod, METH_NOARGS, stack_peek_doc},
+    { "peek", (PyCFunction)stack_peek, METH_NOARGS, stack_peek_doc},
     { "clear", (PyCFunction)stack_clearmethod, METH_NOARGS, stack_clear_doc},
     { NULL, NULL, 0, NULL },
 };
