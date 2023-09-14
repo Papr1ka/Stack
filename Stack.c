@@ -92,6 +92,7 @@ static PyObject* stack_push(Stack* self, PyObject* object)
         return NULL;
     }
     node->item = object;
+    node->next = NULL;
     Py_INCREF(object);
     if (self->head != NULL)
     {
@@ -122,7 +123,8 @@ static PyObject* stack_pop(Stack* self, PyObject* PyUnused(ignored))
 {
     if (self->head == NULL)
     {
-        Py_RETURN_NONE;
+        PyErr_SetString(PyExc_IndexError, "pop from empty stack");
+        return NULL;
     }
     struct StackNode* tmp;
     tmp = self->head;
@@ -130,8 +132,8 @@ static PyObject* stack_pop(Stack* self, PyObject* PyUnused(ignored))
     
     PyObject* object = tmp->item;
     PyMem_Free(tmp);
+    Py_DECREF(object);
     Py_SET_SIZE(self, Py_SIZE(self) - 1);
-
     return object;
 }
 

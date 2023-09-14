@@ -1,35 +1,74 @@
+import unittest
 import stack
-import timeit
+import sys
+import weakref
 
-# t = """
-# import stack
+class TestObject():
+    pass
 
-# s = stack.stack()
+class TestStack(unittest.TestCase):
 
-# for i in range(1, 1000000):
-#     s.push(213)
-#     if i % 150 == 0:
-#         for j in range(100):
-#             s.pop()
+    def test_pushpop(self):
+        s = stack.Stack()
+        for i in range(100, 1000, 3):
+            s.push(i)
+        for i in range(1000, 100, 3):
+            self.assertEqual(i, s.pop())
+    
+    def test_pop(self):
+        s = stack.Stack()
+        s.push(123)
+        s.pop()
+        with self.assertRaises(IndexError):
+            s.pop()
 
-# """
+    def test_peek(self):
+        s = stack.Stack()
+        for i in range(100, 1000, 3):
+            s.push(i)
+            self.assertEqual(i, s.peek())
 
-# t2 = """
-# import collections
+    def test_clear(self):
+        s = stack.Stack()
+        for i in range(100):
+            s.push(i)
+        s.clear()
+        self.assertEqual(0, len(s))
+        with self.assertRaises(IndexError):
+            s.pop()
+    
+    def test_len(self):
+        s = stack.Stack()
+        for i in range(100):
+            s.push(i)
+        self.assertEqual(100, len(s))
+        s.pop()
+        self.assertEqual(99, len(s))
+        s.peek()
+        self.assertEqual(99, len(s))
+        s.push("asdas")
+        self.assertEqual(100, len(s))
+        s.clear()
+        self.assertEqual(0, len(s))
+    
+    def test_refs(self):
+        obj = TestObject()
+        ref = weakref.ref(obj)
+        s = stack.Stack()
+        s.push(obj)
+        self.assertEqual(3, sys.getrefcount(obj))
+        s.pop()
+        print(obj)
+        # self.assertEqual(2, sys.getrefcount(obj))
+        # s.push(obj)
+        # s.clear()
+        # self.assertEqual(2, sys.getrefcount(obj))
+        # s.push(obj)
+        # del obj
+        # self.assertEqual(2, sys.getrefcount(ref()))
+        # s.pop()
+        # self.assertIs(None, ref())
 
-# s = collections.deque()
 
-# for i in range(1, 1000000):
-#     s.append(213)
-#     if i % 150 == 0:
-#         for j in range(100):
-#             s.pop()
-
-# """
-
-# print("Наша реализация: ", timeit.timeit(t, number=100), "секунд")
-# print("deque реализация: ", timeit.timeit(t2, number=100), "секунд")
-
-print(1)
-print(help(stack))
-print(2)
+if __name__ == '__main__':
+    unittest.main()
