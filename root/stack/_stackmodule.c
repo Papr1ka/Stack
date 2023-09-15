@@ -218,7 +218,7 @@ static struct PyModuleDef stackmodule = {
     .m_slots = stackmodule_slots,
 };
 
-PyMODINIT_FUNC PyInit_stack(void)
+PyMODINIT_FUNC PyInit__stack(void)
 {
     PyModuleDef_Init(&stackmodule);
 }

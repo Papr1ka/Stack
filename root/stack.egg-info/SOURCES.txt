@@ -1,0 +1,11 @@
+LICENSE
+README.md
+setup.cfg
+setup.py
+stack/__init__.py
+stack/__init__.pyi
+stack/_stackmodule.c
+stack.egg-info/PKG-INFO
+stack.egg-info/SOURCES.txt
+stack.egg-info/dependency_links.txt
+stack.egg-info/top_level.txt
