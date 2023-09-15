@@ -1,3 +1,15 @@
 .vs/
 build/
 x64/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.pyd
+root/dist/
+
+root/sstack.egg-info/
+
+root/stack.egg-info/
+
+root/sstack/__pycache__/
