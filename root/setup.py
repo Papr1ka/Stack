@@ -1,15 +1,14 @@
-
-
 from setuptools import setup, find_packages, Extension
-from stack import __version__
+from sstack import __version__
 
+PACKAGE_NAME = "sstack"
 
 def readme():
   with open('README.md', 'r') as f:
     return f.read()
 
 setup(
-    name="stack",
+    name=PACKAGE_NAME,
     version=__version__,
     author="Papr1ka",
     author_email="kirillpavlov4214@gmail.com",
@@ -24,11 +23,11 @@ setup(
     'Operating System :: OS Independent'
     ],
     keywords='simple stack python',
-    package_data={"stack": ["*.pyi"]},
+    package_data={PACKAGE_NAME: ["*.pyi"]},
     ext_modules=[
         Extension(
             name="_stack",
-            sources=["stack/_stackmodule.c"],
+            sources=[f"{PACKAGE_NAME}/_stackmodule.c"],
         )
     ],
 )

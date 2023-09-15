@@ -106,7 +106,8 @@ static PyObject* stack_peek(stackobject* self, PyObject* Py_UNUSED(ignored))
 {
     if (self->head == NULL)
     {
-        Py_RETURN_NONE;
+        PyErr_SetString(PyExc_IndexError, "peek from empty stack");
+        return NULL;
     }
     Py_INCREF(self->head->item);
     return self->head->item;
